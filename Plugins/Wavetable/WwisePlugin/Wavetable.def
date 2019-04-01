@@ -1,0 +1,4 @@
+LIBRARY "Wavetable"
+
+EXPORTS
+  AkCreatePlugin
