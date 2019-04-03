@@ -53,20 +53,79 @@ WavetableSource::~WavetableSource()
 {
 }
 
-void FillTable(AkReal64 *Table, AkUInt64 SampleBlock)
+void FillTable(AkReal64 *Table, AkUInt64 SampleBlock, Waveform Waveform, AkUInt64 Harmonics)
 {
     AkReal64 Step = (TWO_PI32 / SampleBlock);
 
-    AkUInt64 i = 0;
+    switch(Waveform)
+    {
+        case SINE:
+        {
+            for(AkUInt64 i = 0; i <= SampleBlock; ++i) 
+            {
+                Table[i] = (AkReal64) sin(Step * i);
+            }
+            break;
+        }
+        case TRIANGLE:
+        {
+            AKASSERT(SampleBlock != 0 || Harmonics != 0 || (Harmonics <= (SampleBlock / 2)));
+
+            AkUInt64 Harmonic = 1;
+            for(AkUInt64 i = 0; i < Harmonics; ++i)
+            {
+                AkReal64 Amplitude = (1.0 / (Harmonic * Harmonic));
+                
+                for(AkUInt64 j = 0; j < SampleBlock; ++j)
+                {
+                    Table[j] += Amplitude * cos(Step * Harmonic * j);
+                }
+                
+                Harmonic += 2;
+            }
+
+            break;
+        }
+        default:
+        {
+            for(AkUInt64 i = 0; i <= SampleBlock; ++i) 
+            {
+                Table[i] = 0.0f;
+            }
+            break;            
+        }
+    }
+}
+
+void NormaliseTable(AkReal64 *Table, AkUInt64 SampleBlock)
+{
+    AkReal64 MaxAmplitude = 0;
+
+    AkUInt64 i = 0; 
     for(i = 0; i < SampleBlock; ++i) 
     {
-        Table[i] = (AkReal64) sin(Step * i);
+        AkReal64 Value = fabs(Table[i]);
+        if(MaxAmplitude < Value)
+        {
+            MaxAmplitude = Value;
+        }
     }
 
-    //Wraparound
+    MaxAmplitude = (1.0 / MaxAmplitude);
+
+    for(i = 0; i < SampleBlock; ++i) 
+    {
+        Table[i] *= MaxAmplitude;
+    }
+
     Table[i] = Table[0];
 }
 
+void CreateTable(AkReal64 *Table, AkUInt64 SampleBlock, Waveform Waveform, AkUInt64 Harmonics)
+{
+    FillTable(Table, SampleBlock, Waveform, Harmonics);
+    NormaliseTable(Table, SampleBlock);
+}
 
 AKRESULT WavetableSource::Init(AK::IAkPluginMemAlloc* in_pAllocator, AK::IAkSourcePluginContext* in_pContext, AK::IAkPluginParam* in_pParams, AkAudioFormat& in_rFormat)
 {
@@ -85,8 +144,8 @@ AKRESULT WavetableSource::Init(AK::IAkPluginMemAlloc* in_pAllocator, AK::IAkSour
     SampleRate = in_rFormat.uSampleRate;
     SampleBlock = (8192 + 1);
     Table = (AkReal64 *) m_pAllocator->Malloc((size_t) (sizeof(AkReal64) * SampleBlock) * Channels);
-    FillTable(Table, SampleBlock);
-
+    CreateTable(Table, SampleBlock, TRIANGLE, 1024);
+    
     return AK_Success;
 }
 
@@ -147,9 +206,6 @@ void WavetableSource::Execute(AkAudioBuffer* out_pBuffer)
 
             Value += (Fraction * Slope);
             
-            // Generate output here
-            *pBuf++ = (AkReal32) Value;
-
             CurrentPhase += PhaseIncrement;
 
             while(CurrentPhase >= TableLength) 
@@ -161,6 +217,9 @@ void WavetableSource::Execute(AkAudioBuffer* out_pBuffer)
             {
                 CurrentPhase += TableLength;
             }
+
+            // Generate output here
+            *pBuf++ = (AkReal32) Value;
 
             //Increment loop
             ++uFramesProduced;
