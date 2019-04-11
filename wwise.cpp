@@ -1,5 +1,3 @@
-//clang -g -gcodeview -I"%WWISESDK%\include" -L"%WWISESDK%\x64_vc140\Debug\lib" -lWavetableSource.lib -lAkMemoryMgr.lib -lAkSoundEngine.lib -lAkStreamMgr.lib -lCommunicationCentral.lib -lmsvcrt.lib -lmsvcmrt.lib -ldinput8.lib -lWinmm.lib -ldsound.lib -ldxguid.lib -lws2_32.lib -lxinput.lib -luser32.lib -lOle32.lib wwise.cpp -o wwise.exe
-
 #include <stdio.h>
 
 #include <AK/SoundEngine/Common/AkMemoryMgr.h>
@@ -184,6 +182,11 @@ int main()
         printf("Wwise: Failed to create SO_Animals!\n");
     }
 
+    if(wwise_EventCreate(200, "SO_Wavetable") == AK_Fail);
+    {
+        printf("Wwise: Failed to create SO_Wavetable!\n");
+    }
+    
 
     bool GlobalRunning = true;
     int i = 0;
@@ -192,7 +195,8 @@ int main()
     {
         if(i == 5000)
         {
-            AkPlayingID Playing = wwise_EventPost(100, "Animals");
+            // AkPlayingID Playing = wwise_EventPost(100, "Animals");
+            AkPlayingID Playing = wwise_EventPost(100, "Wavetable");
             printf("%lu\n", Playing);
         }
 

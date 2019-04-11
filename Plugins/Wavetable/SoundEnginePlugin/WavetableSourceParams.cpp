@@ -26,7 +26,6 @@ the specific language governing permissions and limitations under the License.
 *******************************************************************************/
 
 #include "WavetableSourceParams.h"
-
 #include <AK/Tools/Common/AkBankReadHelpers.h>
 
 WavetableSourceParams::WavetableSourceParams()
@@ -51,11 +50,16 @@ AK::IAkPluginParam* WavetableSourceParams::Clone(AK::IAkPluginMemAlloc* in_pAllo
 
 AKRESULT WavetableSourceParams::Init(AK::IAkPluginMemAlloc* in_pAllocator, const void* in_pParamsBlock, AkUInt32 in_ulBlockSize)
 {
-    if (in_ulBlockSize == 0)
+    if(in_ulBlockSize == 0)
     {
         // Initialize default parameters here
-        RTPC.fDuration = 0.0f;
-        RTPC.fFrequency = 0.0f;
+        RTPC.fDuration  = 5.0f;
+        RTPC.Amplitude  = 0.9f;
+        RTPC.Attack     = 1.2f;
+        RTPC.Decay      = 0.5f;
+        RTPC.Sustain    = 0.7f;
+        RTPC.Release    = 2.2f;
+        RTPC.Frequency  = 20.0f;
         m_paramChangeHandler.SetAllParamChanges();
         return AK_Success;
     }
@@ -76,7 +80,12 @@ AKRESULT WavetableSourceParams::SetParamsBlock(const void* in_pParamsBlock, AkUI
 
     // Read bank data here
     RTPC.fDuration  = READBANKDATA(AkReal32, pParamsBlock, in_ulBlockSize);
-    RTPC.fFrequency = READBANKDATA(AkReal32, pParamsBlock, in_ulBlockSize);
+    RTPC.Amplitude  = READBANKDATA(AkReal32, pParamsBlock, in_ulBlockSize);
+    RTPC.Attack     = READBANKDATA(AkReal32, pParamsBlock, in_ulBlockSize);
+    RTPC.Decay      = READBANKDATA(AkReal32, pParamsBlock, in_ulBlockSize);
+    RTPC.Sustain    = READBANKDATA(AkReal32, pParamsBlock, in_ulBlockSize);
+    RTPC.Release    = READBANKDATA(AkReal32, pParamsBlock, in_ulBlockSize);
+    RTPC.Frequency  = READBANKDATA(AkReal32, pParamsBlock, in_ulBlockSize);
     CHECKBANKDATASIZE(in_ulBlockSize, eResult);
     m_paramChangeHandler.SetAllParamChanges();
 
@@ -90,17 +99,53 @@ AKRESULT WavetableSourceParams::SetParam(AkPluginParamID in_paramID, const void*
     // Handle parameter change here
     switch (in_paramID)
     {
-    case PARAM_DURATION_ID:
-        RTPC.fDuration = *((AkReal32*)in_pValue);
-        m_paramChangeHandler.SetParamChange(PARAM_DURATION_ID);
-        break;
-    case PARAM_FREQUENCY_ID:
-        RTPC.fFrequency = *((AkReal32*)in_pValue);
-        m_paramChangeHandler.SetParamChange(PARAM_FREQUENCY_ID);
-        break;   
-    default:
-        eResult = AK_InvalidParameter;
-        break;
+        case PARAM_DURATION_ID:
+        {
+            RTPC.fDuration = *((AkReal32*)in_pValue);
+            m_paramChangeHandler.SetParamChange(PARAM_DURATION_ID);
+            break;
+        }
+        case PARAM_AMPLITUDE_ID:
+        {
+            RTPC.Amplitude = *((AkReal32*)in_pValue);
+            m_paramChangeHandler.SetParamChange(PARAM_AMPLITUDE_ID);
+            break;
+        }
+        case PARAM_ATTACK_ID:
+        {
+            RTPC.Attack = *((AkReal32*)in_pValue);
+            m_paramChangeHandler.SetParamChange(PARAM_ATTACK_ID);
+            break;
+        }      
+        case PARAM_DECAY_ID:
+        {
+            RTPC.Decay = *((AkReal32*)in_pValue);
+            m_paramChangeHandler.SetParamChange(PARAM_DECAY_ID);
+            break;
+        }      
+        case PARAM_SUSTAIN_ID:
+        {
+            RTPC.Sustain = *((AkReal32*)in_pValue);
+            m_paramChangeHandler.SetParamChange(PARAM_SUSTAIN_ID);
+            break;
+        }      
+        case PARAM_RELEASE_ID:
+        {
+            RTPC.Release = *((AkReal32*)in_pValue);
+            m_paramChangeHandler.SetParamChange(PARAM_RELEASE_ID);
+            break;
+        }     
+        case PARAM_FREQUENCY_ID:
+        {
+            RTPC.Frequency = *((AkReal32*)in_pValue);
+            m_paramChangeHandler.SetParamChange(PARAM_FREQUENCY_ID);
+            break;
+        }                                                
+        default:
+        {
+            eResult = AK_InvalidParameter;
+            break;
+        }
     }
 
     return eResult;

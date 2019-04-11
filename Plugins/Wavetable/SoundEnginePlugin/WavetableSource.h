@@ -29,19 +29,16 @@ the specific language governing permissions and limitations under the License.
 #define WavetableSource_H
 
 
-
-#define PI32 3.14159265359f
-#define TWO_PI32 (2.0 * PI32)
-typedef enum Waveform{SINE, TRIANGLE};
-
 #include "WavetableSourceParams.h"
 
+#include "Oscillator.cpp"
+
+#include <AK/Wwise/AudioPlugin.h>
 #include <AK/Plugin/PluginServices/AkFXDurationHandler.h>
 
 /// See https://www.audiokinetic.com/library/edge/?source=SDK&id=soundengine__plugins__source.html
 /// for the documentation about source plug-ins
-class WavetableSource
-    : public AK::IAkSourcePlugin
+class WavetableSource : public AK::IAkSourcePlugin
 {
 public:
     WavetableSource();
@@ -68,12 +65,14 @@ public:
     /// This method is called to determine the approximate duration (in ms) of the source.
     AkReal32 GetDuration() const;
 
-private:
-    AkReal64 *Table;
-    AkUInt64 SampleBlock;
+    //Oscillator parameters
     AkUInt32 SampleRate;
-    Waveform Waveform;
+    AkUInt32 TableLength;
+    WAVETABLE_OSCILLATOR *Oscillator;
+    AkReal64 **PresetList;
 
+    //Wwise Plugin contexts
+private:
     WavetableSourceParams* m_pParams;
     AK::IAkPluginMemAlloc* m_pAllocator;
     AK::IAkSourcePluginContext* m_pContext;

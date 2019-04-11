@@ -53,106 +53,43 @@ WavetableSource::~WavetableSource()
 {
 }
 
-void FillTable(AkReal64 *Table, AkUInt64 SampleBlock, Waveform Waveform, AkUInt64 Harmonics)
-{
-    AkReal64 Step = (TWO_PI32 / SampleBlock);
-
-    switch(Waveform)
-    {
-        case SINE:
-        {
-            for(AkUInt64 i = 0; i <= SampleBlock; ++i) 
-            {
-                Table[i] = (AkReal64) sin(Step * i);
-            }
-            break;
-        }
-        case TRIANGLE:
-        {
-            AKASSERT(SampleBlock != 0 || Harmonics != 0 || (Harmonics <= (SampleBlock / 2)));
-
-            AkUInt64 Harmonic = 1;
-            for(AkUInt64 i = 0; i < Harmonics; ++i)
-            {
-                AkReal64 Amplitude = (1.0 / (Harmonic * Harmonic));
-                
-                for(AkUInt64 j = 0; j < SampleBlock; ++j)
-                {
-                    Table[j] += Amplitude * cos(Step * Harmonic * j);
-                }
-                
-                Harmonic += 2;
-            }
-
-            break;
-        }
-        default:
-        {
-            for(AkUInt64 i = 0; i <= SampleBlock; ++i) 
-            {
-                Table[i] = 0.0f;
-            }
-            break;            
-        }
-    }
-}
-
-void NormaliseTable(AkReal64 *Table, AkUInt64 SampleBlock)
-{
-    AkReal64 MaxAmplitude = 0;
-
-    AkUInt64 i = 0; 
-    for(i = 0; i < SampleBlock; ++i) 
-    {
-        AkReal64 Value = fabs(Table[i]);
-        if(MaxAmplitude < Value)
-        {
-            MaxAmplitude = Value;
-        }
-    }
-
-    MaxAmplitude = (1.0 / MaxAmplitude);
-
-    for(i = 0; i < SampleBlock; ++i) 
-    {
-        Table[i] *= MaxAmplitude;
-    }
-
-    Table[i] = Table[0];
-}
-
-void CreateTable(AkReal64 *Table, AkUInt64 SampleBlock, Waveform Waveform, AkUInt64 Harmonics)
-{
-    FillTable(Table, SampleBlock, Waveform, Harmonics);
-    NormaliseTable(Table, SampleBlock);
-}
-
 AKRESULT WavetableSource::Init(AK::IAkPluginMemAlloc* in_pAllocator, AK::IAkSourcePluginContext* in_pContext, AK::IAkPluginParam* in_pParams, AkAudioFormat& in_rFormat)
 {
     m_pParams = (WavetableSourceParams*)in_pParams;
     m_pAllocator = in_pAllocator;
     m_pContext = in_pContext;
 
+    //Set duration for output buffer size
     m_durationHandler.Setup(m_pParams->RTPC.fDuration, in_pContext->GetNumLoops(), in_rFormat.uSampleRate);
 
-    AkUInt32 Channels = in_rFormat.channelConfig.uNumChannels;
-    if(Channels < 2)
-    {
-        Channels = 2;
-    }
-
+    //Oscillator initialisation
     SampleRate = in_rFormat.uSampleRate;
-    SampleBlock = (8192 + 1);
-    Table = (AkReal64 *) m_pAllocator->Malloc((size_t) (sizeof(AkReal64) * SampleBlock) * Channels);
-    CreateTable(Table, SampleBlock, TRIANGLE, 1024);
+    TableLength = 4096;
+    PresetList = (AkReal64 **) in_pAllocator->Malloc(((sizeof(AkReal64) * TableLength) * MAX_PRESETS));
+    BuildPresets(in_pAllocator, PresetList, TableLength); //Build the preset tables
     
+    AkReal64 *Table = new AkReal64 [TableLength];
+    for(AkUInt32 i = 0; i < TableLength; ++i)
+    {
+        //0 = Table1  1 = Table2
+        Table[i] = Lerp(WAVE_TABLE_Mopho_Vox_1[i], WAVE_TABLE_Mopho_Vox_2[i], 0.5f);
+    }
+    
+    Oscillator = CreateWavetableOscillator(Table, TableLength); //Create the oscillator
+
+    //Create ADSR envelope
+    Oscillator->Envelope = ADSRCreate(in_pAllocator, SampleRate, 1.0f, m_pParams->RTPC.Attack, m_pParams->RTPC.Decay, m_pParams->RTPC.Sustain, m_pParams->RTPC.Release);
+
+    delete [] Table;
+
     return AK_Success;
 }
 
 AKRESULT WavetableSource::Term(AK::IAkPluginMemAlloc* in_pAllocator)
 {
-    m_pAllocator->Free(Table);
-
+    in_pAllocator->Free(PresetList);
+    in_pAllocator->Free(Oscillator->Envelope);
+    in_pAllocator->Free(Oscillator);
     AK_PLUGIN_DELETE(in_pAllocator, this);
     return AK_Success;
 }
@@ -172,58 +109,44 @@ AKRESULT WavetableSource::GetPluginInfo(AkPluginInfo& out_rPluginInfo)
 
 void WavetableSource::Execute(AkAudioBuffer* out_pBuffer)
 {
+    //Create output buffer
     m_durationHandler.SetDuration(m_pParams->RTPC.fDuration);
     m_durationHandler.ProduceBuffer(out_pBuffer);
 
+    //Get number of channels
     const AkUInt32 uNumChannels = out_pBuffer->NumChannels();
-
-    AkReal64 CurrentPhase = 0.0;
-    AkReal64 TableLength = (AkReal64) SampleBlock;
-    AkReal64 SizeOverSampleRate = (AkReal64) SampleBlock / SampleRate;
-    AkReal64 PhaseIncrement = SizeOverSampleRate * m_pParams->RTPC.fFrequency;
-
     AkUInt16 uFramesProduced;
-    for (AkUInt32 i = 0; i < uNumChannels; ++i)
-    {
-        AkReal32* AK_RESTRICT pBuf = (AkReal32* AK_RESTRICT)out_pBuffer->GetChannel(i);
 
-        //Interpolated loop
-        AkInt32 Base = 0;
-        AkInt32 Next = 0;
-        AkReal64 Fraction = 0;
-        AkReal64 Value = 0;
-        AkReal64 Slope = 0;
+    //Set frequency and amplitude
+    AkReal32 Amplitude = m_pParams->RTPC.Amplitude;
+    AkReal64 Frequency = ((m_pParams->RTPC.Frequency + 0.1) / SampleRate);
+    // AkReal64 Multi = 1.0 + (log(20000.0 / SampleRate) - log(Frequency)) / Oscillator->Envelope->DurationInSamples;
+
+    //TODO: Switch to interleaved processsing?
+    for(AkUInt32 i = 0; i < uNumChannels; ++i)
+    {
+        AkReal32* AK_RESTRICT OutputBuffer = (AkReal32* AK_RESTRICT)out_pBuffer->GetChannel(i);
 
         uFramesProduced = 0;
-        while (uFramesProduced < out_pBuffer->uValidFrames)
+        while(uFramesProduced < out_pBuffer->uValidFrames)
         {
-            Base = (AkInt32) CurrentPhase;
-            Next = (Base + 1);
+            Oscillator->PhaseIncrement = Frequency;
 
-            Fraction = CurrentPhase - Base;
-            Value = Table[Base];
-            Slope = (Table[Next] - Value);
-
-            Value += (Fraction * Slope);
-            
-            CurrentPhase += PhaseIncrement;
-
-            while(CurrentPhase >= TableLength) 
-            {
-                CurrentPhase -= TableLength;
-            }
-
-            while(CurrentPhase < 0)
-            {
-                CurrentPhase += TableLength;
-            }
-
-            // Generate output here
-            *pBuf++ = (AkReal32) Value;
+            //Generate output here
+            AkReal32 CurrentSample = (AkReal32) GetSample(Oscillator, false) * (Amplitude * ADSRTick(Oscillator->Envelope));
+			OutputBuffer[uFramesProduced] = CurrentSample;
 
             //Increment loop
             ++uFramesProduced;
+
+            //Update phase
+            Oscillator->PhaseCurrent += Oscillator->PhaseIncrement;
+            if(Oscillator->PhaseCurrent >= 1.0)
+            {
+                Oscillator->PhaseCurrent -= 1.0;
+            }
         }
+        uFramesProduced = 0;
     }
 }
 

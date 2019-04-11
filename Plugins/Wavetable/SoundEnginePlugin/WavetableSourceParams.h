@@ -33,14 +33,24 @@ the specific language governing permissions and limitations under the License.
 
 // Add parameters IDs here, those IDs should map to the AudioEnginePropertyID
 // attributes in the xml property definition.
-static const AkPluginParamID PARAM_DURATION_ID  = 0;
-static const AkPluginParamID PARAM_FREQUENCY_ID = 1;
-static const AkUInt32 NUM_PARAMS                = 2;
+static const AkPluginParamID PARAM_DURATION_ID      = 0;
+static const AkPluginParamID PARAM_AMPLITUDE_ID     = 1;
+static const AkPluginParamID PARAM_ATTACK_ID        = 2;
+static const AkPluginParamID PARAM_DECAY_ID         = 3;
+static const AkPluginParamID PARAM_SUSTAIN_ID       = 4;
+static const AkPluginParamID PARAM_RELEASE_ID       = 5;
+static const AkPluginParamID PARAM_FREQUENCY_ID     = 6;
+static const AkUInt32 NUM_PARAMS                    = 7;
 
 struct WavetableRTPCParams
 {
     AkReal32 fDuration;
-    AkReal32 fFrequency;
+    AkReal32 Amplitude;
+    AkReal32 Attack;
+    AkReal32 Decay;
+    AkReal32 Sustain;
+    AkReal32 Release;
+    AkReal32 Frequency;
 };
 
 struct WavetableNonRTPCParams

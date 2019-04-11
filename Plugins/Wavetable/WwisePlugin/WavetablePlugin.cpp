@@ -56,5 +56,23 @@ bool WavetablePlugin::GetBankParameters(const GUID& in_guidPlatform, AK::Wwise::
     m_pPSet->GetValue(in_guidPlatform, L"Duration", varProp);
     in_pDataWriter->WriteReal32(varProp.fltVal);
 
+    m_pPSet->GetValue(in_guidPlatform, L"Amplitude", varProp);
+    in_pDataWriter->WriteReal32(varProp.fltVal);
+
+    m_pPSet->GetValue(in_guidPlatform, L"Attack", varProp);
+    in_pDataWriter->WriteReal32(varProp.fltVal);
+
+    m_pPSet->GetValue(in_guidPlatform, L"Decay", varProp);
+    in_pDataWriter->WriteReal32(varProp.fltVal);
+    
+    m_pPSet->GetValue(in_guidPlatform, L"Sustain", varProp);
+    in_pDataWriter->WriteReal32(varProp.fltVal);
+
+    m_pPSet->GetValue(in_guidPlatform, L"Release", varProp);
+    in_pDataWriter->WriteReal32(varProp.fltVal);         
+
+    m_pPSet->GetValue(in_guidPlatform, L"Frequency", varProp);
+    in_pDataWriter->WriteReal32(varProp.fltVal);    
+
     return true;
 }

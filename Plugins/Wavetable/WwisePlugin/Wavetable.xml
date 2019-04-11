@@ -49,7 +49,7 @@ for the documentation about the plugin xml format
       <!-- Add your property definitions here -->
       <Property Name="Duration" Type="Real32" SupportRTPCType="Exclusive" DisplayName="Duration">
         <UserInterface Step="0.1" Fine="0.001" Decimals="3" UIMax="10" />
-        <DefaultValue>0.0</DefaultValue>
+        <DefaultValue>5.0</DefaultValue>
         <AudioEnginePropertyID>0</AudioEnginePropertyID>
         <Restrictions>
           <ValueRestriction>
@@ -60,19 +60,84 @@ for the documentation about the plugin xml format
           </ValueRestriction>
         </Restrictions>
       </Property>
-      <Property Name="Frequency" Type="Real32" SupportRTPCType="Exclusive" DataMeaning="Frequency" DisplayName="Frequency">
-        <UserInterface Step="1.0" Fine="0.1" Decimals="3" UIMax="22000" />
-        <DefaultValue>0.0</DefaultValue>
+      <Property Name="Amplitude" Type="Real32" SupportRTPCType="Exclusive" DisplayName="Amplitude">
+        <UserInterface Step="0.001" Fine="0.00001" Decimals="3" UIMax="1.0" />
+        <DefaultValue>0.9</DefaultValue>
         <AudioEnginePropertyID>1</AudioEnginePropertyID>
         <Restrictions>
           <ValueRestriction>
             <Range Type="Real32">
-              <Min>20</Min>
-              <Max>22000</Max>
+              <Min>0.0</Min>
+              <Max>1.0</Max>
             </Range>
           </ValueRestriction>
         </Restrictions>
-      </Property>
+      </Property>           
+      <Property Name="Attack" Type="Real32" SupportRTPCType="Exclusive" DisplayName="Attack">
+        <UserInterface Step="0.1" Fine="0.001" Decimals="3" UIMax="10" />
+        <DefaultValue>1.5</DefaultValue>
+        <AudioEnginePropertyID>2</AudioEnginePropertyID>
+        <Restrictions>
+          <ValueRestriction>
+            <Range Type="Real32">
+              <Min>0.001</Min>
+              <Max>1000</Max>
+            </Range>
+          </ValueRestriction>
+        </Restrictions>
+      </Property>      
+      <Property Name="Decay" Type="Real32" SupportRTPCType="Exclusive" DisplayName="Decay">
+        <UserInterface Step="0.1" Fine="0.001" Decimals="3" UIMax="10" />
+        <DefaultValue>0.5</DefaultValue>
+        <AudioEnginePropertyID>3</AudioEnginePropertyID>
+        <Restrictions>
+          <ValueRestriction>
+            <Range Type="Real32">
+              <Min>0.001</Min>
+              <Max>1000</Max>
+            </Range>
+          </ValueRestriction>
+        </Restrictions>
+      </Property>             
+      <Property Name="Sustain" Type="Real32" SupportRTPCType="Exclusive" DisplayName="Sustain">
+        <UserInterface Step="0.001" Fine="0.00001" Decimals="3" UIMax="1.0" />
+        <DefaultValue>0.7</DefaultValue>
+        <AudioEnginePropertyID>4</AudioEnginePropertyID>
+        <Restrictions>
+          <ValueRestriction>
+            <Range Type="Real32">
+              <Min>0.0</Min>
+              <Max>1.0</Max>
+            </Range>
+          </ValueRestriction>
+        </Restrictions>
+      </Property>   
+      <Property Name="Release" Type="Real32" SupportRTPCType="Exclusive" DisplayName="Release">
+        <UserInterface Step="0.1" Fine="0.001" Decimals="3" UIMax="10" />
+        <DefaultValue>3.0</DefaultValue>
+        <AudioEnginePropertyID>5</AudioEnginePropertyID>
+        <Restrictions>
+          <ValueRestriction>
+            <Range Type="Real32">
+              <Min>0.001</Min>
+              <Max>1000</Max>
+            </Range>
+          </ValueRestriction>
+        </Restrictions>
+      </Property>        
+      <Property Name="Frequency" Type="Real32" SupportRTPCType="Exclusive" DisplayName="Frequency">
+        <UserInterface Step="1.0" Fine="0.1" Decimals="3" UIMax="20000" />
+        <DefaultValue>20.0</DefaultValue>
+        <AudioEnginePropertyID>6</AudioEnginePropertyID>
+        <Restrictions>
+          <ValueRestriction>
+            <Range Type="Real32">
+              <Min>0.0</Min>
+              <Max>20000</Max>
+            </Range>
+          </ValueRestriction>
+        </Restrictions>
+      </Property>                
     </Properties>
   </SourcePlugin>
 </PluginModule>

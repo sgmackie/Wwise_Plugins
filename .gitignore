@@ -4,6 +4,7 @@ Wwise_Project/
 *.exe
 *.exp
 *.lib
+*.bat
 
 
 
