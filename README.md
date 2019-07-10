@@ -22,4 +22,4 @@ Bit rate reduction and downsampler plugin with optional hard/soft clipping disto
 - DSP Theory:
   - The Audio Programming Book (Richard Boulanger and Victor Lazzarini)
   - Understanding Digital Signal Processing (Richard G. Lyons)
-  - Understanding Digital Signal Processing (Richard G. Lyons)
+  - Hack Audio (Eric Tarr)
