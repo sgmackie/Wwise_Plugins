@@ -6,7 +6,7 @@
 #include <AK/SoundEngine/Common/IAkStreamMgr.h>
 
 
-#include <AK/Plugin/WavetableSourceFactory.h>
+#include <AK/Plugin/BitcrushFXFactory.h>
 
 
 #ifndef AK_OPTIMIZED
@@ -177,16 +177,11 @@ int main()
     AK::SoundEngine::SetDefaultListeners(&PlayerListener, 1);
 
     //Create objects used to process events
-    if(wwise_EventCreate(100, "SO_Animals") == AK_Fail);
+    if(wwise_EventCreate(200, "SO_Sax") == AK_Fail);
     {
-        printf("Wwise: Failed to create SO_Animals!\n");
+        printf("Wwise: Failed to create SO_Sax!\n");
     }
 
-    if(wwise_EventCreate(200, "SO_Wavetable") == AK_Fail);
-    {
-        printf("Wwise: Failed to create SO_Wavetable!\n");
-    }
-    
 
     bool GlobalRunning = true;
     int i = 0;
@@ -195,8 +190,7 @@ int main()
     {
         if(i == 5000)
         {
-            // AkPlayingID Playing = wwise_EventPost(100, "Animals");
-            AkPlayingID Playing = wwise_EventPost(100, "Wavetable");
+            AkPlayingID Playing = wwise_EventPost(200, "Sax");
             printf("%lu\n", Playing);
         }
 
