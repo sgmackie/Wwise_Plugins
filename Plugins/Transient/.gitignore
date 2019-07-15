@@ -1,16 +1,3 @@
-.vscode/
-common/
-Wwise_Project/
-Wwise_Tube/
-Stretch/
-CCode/
-*.exe
-*.exp
-*.lib
-*.bat
-
-
-
 
 # Created by https://www.gitignore.io/api/archives,linux,xcode,macos,windows,visualstudio,premake-gmake
 
